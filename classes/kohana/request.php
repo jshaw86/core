@@ -644,6 +644,17 @@ class Kohana_Request {
 	{
 		if ( ! headers_sent())
 		{
+			if (isset($_SERVER['SERVER_PROTOCOL']))
+			{
+				// Use the default server protocol
+				$protocol = $_SERVER['SERVER_PROTOCOL'];
+			}
+			else
+			{
+				// Default to using newer protocol
+				$protocol = 'HTTP/1.1';
+			}
+
 			// HTTP status line
 			header((isset($_SERVER['SERVER_PROTOCOL'])?$_SERVER['SERVER_PROTOCOL']:'HTTP/1.1').' '.$this->status.' '.Request::$messages[$this->status]);
 
