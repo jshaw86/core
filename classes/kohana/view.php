@@ -5,6 +5,7 @@
  * the view.
  *
  * @package    Kohana
+ * @category   Kohana
  * @author     Kohana Team
  * @copyright  (c) 2008-2009 Kohana Team
  * @license    http://kohanaphp.com/license
