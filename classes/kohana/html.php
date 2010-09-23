@@ -364,4 +364,18 @@ class Kohana_HTML {
 		return $compiled;
 	}
 
+	/**
+	 * Compiles a html tag given, tag, attributes and optional content
+	 *
+	 * @param string
+	 * @param array attribute list
+	 * @param string
+	 * @return string
+	 */
+	public static function element($tag,$attrs,$content =null){
+			$start = '<'.$tag.' ';
+			$end = $content?' >'.$content.'</'.$tag.'>':' />';
+		 	return $start.self::attributes($attrs). $end;
+
+	}
 } // End html
