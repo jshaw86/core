@@ -364,6 +364,22 @@ class Kohana_HTML {
 		return $compiled;
 	}
 
+
+	public static function select($values,$attrs,$current = null){
+		$select = null;
+
+		$options = '';
+		foreach($values as $value => $inner_html){
+			//if the value is an integer, then set the value to the inner_html(i.e. the index equals the value of the index)
+			$value = preg_match('/^[0-9]+$/',$value)? $inner_html:$value;
+			$options .= self::element('option',$current == $value? array('value' => $value,'selected' => true):array('value' => $value), $inner_html); 
+
+		}
+
+		return self::element('select',$attrs,$options);
+
+	}
+
 	/**
 	 * Compiles a html tag given, tag, attributes and optional content
 	 *
