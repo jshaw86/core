@@ -15,7 +15,35 @@ class Kohana_Request_Client_Internal extends Request_Client {
 	 * @var    array
 	 */
 	protected $_previous_environment;
+	/**
+	 * _invoke_model, this method is invoked when:
+	 *
+	 * 1. a controller does not exist 
+	 * 2. the **action** inside the request instance does not exist AND there is no __call method for the given in the controller
+	 *
+	 * @param array
+	 * @throws Exception if model does not exist
+	 */
+	protected function _invoke_model($params){
+			//map the controller name to the model, and the action to a method in the model
+			$model = $this->controller;
+			$method = $this->action;	
+			FB::log($model,'invoking model');
+			$model = JP_Model::factory($model);
+			//set the response to the result of the model
+			$this->response = JP_Operations::call($model,$method,$params);
+			//guarentee that result will be a JP_Result or JP_Result_Array
+			if(!$this->response instanceof JP_Result && !$this->response instanceof JP_Result_Array){
+				$this->response = JP_Result_Array::factory()->args('result',$this->response);
 
+			}
+
+			//set the format to the format in the response
+			$this->response->bind('format',$this->param('format'));
+
+
+
+	}
 	/**
 	 * Processes the request, executing the controller action that handles this
 	 * request, determined by the [Route].
@@ -92,47 +120,107 @@ class Kohana_Request_Client_Internal extends Request_Client {
 			if ( ! class_exists($prefix.$controller))
 			{
 				throw new Http_Exception_404('The requested URL :uri was not found on this server.',
-													array(':uri' => $request->param('uri')));
+					array(':uri' => $request->param('uri')));
 			}
 
-			// Load the controller using reflection
-			$class = new ReflectionClass($prefix.$controller);
 
-			if ($class->isAbstract())
+			try
 			{
-				throw new Kohana_Exception('Cannot create instances of abstract :controller',
-					array(':controller' => $prefix.$controller));
+				$class =false;
+				try{
+					// Load the controller using reflection
+					$class = new ReflectionClass($prefix.$controller);
+				}
+				catch(Exception $e){
+					$this->_invoke_model(isset($_REQUEST['params'])? $_REQUEST['params']:array());
+				}
+
+				//new	
+				if ($class->isAbstract())
+				{
+					throw new Kohana_Exception('Cannot create instances of abstract :controller',
+						array(':controller' => $prefix.$controller));
+				}
+
+				// Create a new instance of the controller
+				$controller = $class->newInstance($request, $request->create_response());
+
+				$class->getMethod('before')->invoke($controller);
+
+				// Determine the action to use
+				$action = $request->action();
+
+				$params = $request->param();
+
+				// If the action doesn't exist, it's a 404
+				if ( ! $class->hasMethod('action_'.$action))
+				{
+					throw new Http_Exception_404('The requested URL :uri was not found on this server.',
+						array(':uri' => $request->param('uri')));
+				}
+
+				if($class->hasMethod('action_'.$action)){
+					$method = $class->getMethod('action_'.$action);
+					/**
+					 * Execute the main action with the parameters
+					 *
+					 * @deprecated $params passing is deprecated since version 3.1
+					 *             will be removed in 3.2.
+					 */
+					$method->invokeArgs($controller, $params);
+				}
+				elseif($class->hasMethod('__call')){
+					$class->getMethod('__call')->invokeArgs($controller,array($action,$this->_params));
+
+				}
+				else{
+					try{
+						$this->_invoke_model(isset($_REQUEST['params'])? $_REQUEST['params']:array());	
+					}
+					catch(Exception $e){
+
+						$class->getMethod('action_index')->invokeArgs($controller,$this->_params);
+
+					}
+
+				}
+
+
+				// Execute the "after action" method
+				$class->getMethod('after')->invoke($controller);
+
+
 			}
 
-			// Create a new instance of the controller
-			$controller = $class->newInstance($request, $request->create_response());
+		catch (Exception $e)
+		{
+			// Restore the previous request
+			Request::$current = $previous;
 
-			$class->getMethod('before')->invoke($controller);
 
-			// Determine the action to use
-			$action = $request->action();
-
-			$params = $request->param();
-
-			// If the action doesn't exist, it's a 404
-			if ( ! $class->hasMethod('action_'.$action))
+			if (isset($benchmark))
 			{
-				throw new Http_Exception_404('The requested URL :uri was not found on this server.',
-													array(':uri' => $request->param('uri')));
+				// Delete the benchmark, it is invalid
+				Profiler::delete($benchmark);
 			}
 
-			$method = $class->getMethod('action_'.$action);
+			if ($e instanceof ReflectionException)
+			{
+				// Reflection will throw exceptions for missing classes or actions
+				$this->status = 404;
+			}
+			else
+			{
+				// All other exceptions are PHP/server errors
+				$this->status = 500;
+			}
 
-			/**
-			 * Execute the main action with the parameters
-			 *
-			 * @deprecated $params passing is deprecated since version 3.1
-			 *             will be removed in 3.2.
-			 */
-			$method->invokeArgs($controller, $params);
+			// Re-throw the exception
+			throw $e;
+		}
 
-			// Execute the "after action" method
-			$class->getMethod('after')->invoke($controller);
+
+	
 
 			// Stop response time
 			$this->_response_time = (time() - $this->_response_time);
