@@ -10,7 +10,7 @@
  * @license    http://kohanaframework.org/license
  */
 class Kohana_Request implements Http_Request {
-
+	
 	/**
 	 * @var  string  client user agent
 	 */
@@ -1369,29 +1369,5 @@ class Kohana_Request implements Http_Request {
 
 		return $params;
 	}
-
-
-	public function __get($key){
-		if($key === 'response'){
-			return $this->body();
-
-		}
-
-		throw new ErrorException('Undefined Property: JP_Request::$'.$key);
-
-
-	}
-
-
-	public function __set($key,$value){
-		if($key === 'response'){
-			$this->body($value);
-
-		}
-		else{
-			throw new ErrorException('Undefined Property: JP_Request::$'.$key);
-		}
-	}
-
 
 } // End Request
