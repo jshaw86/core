@@ -201,7 +201,7 @@ class Kohana_Response implements Http_Response, Serializable {
 			}
 		}
 	}
-
+	
 	/**
 	 * Outputs the body when cast to string
 	 *
@@ -209,7 +209,7 @@ class Kohana_Response implements Http_Response, Serializable {
 	 */
 	public function __toString()
 	{
-		return $this->_body;
+		return (string) $this->_body;
 	}
 
 	/**
@@ -221,10 +221,10 @@ class Kohana_Response implements Http_Response, Serializable {
 	{
 		if ($content)
 		{
-			$this->_body = (string) $content;
+			$this->_body = $content instanceof Kohana_Response? (string) $content:$content;
 			return $this;
 		}
-
+		
 		return $this->_body;
 	}
 
