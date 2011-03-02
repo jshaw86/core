@@ -173,6 +173,14 @@ class Kohana_Request implements Http_Request {
 
 			$request->query($_GET)
 				->post($_POST);
+			// Add the Content-Type header
+			$instance->headers['Content-Type'] = 'text/html; charset='.Kohana::$charset;
+
+			if (Kohana::$expose)
+			{
+				$instance->headers['X-Powered-By'] = 'Kohana Framework '.Kohana::VERSION;
+			}
+
 		}
 
 		return $request;

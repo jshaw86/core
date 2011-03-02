@@ -128,6 +128,12 @@ class Kohana_Core {
 
 	/**
 	 * @var  Log  logging object
+	 * @var  boolean  set the X-Powered-By header
+	 */
+	public static $expose = TRUE;
+
+	/**
+	 * @var  object  logging object
 	 */
 	public static $log;
 
@@ -237,6 +243,11 @@ class Kohana_Core {
 		if (isset($settings['expose']))
 		{
 			Kohana::$expose = (bool) $settings['expose'];
+		}
+
+		if (isset($settings['expose']))
+		{
+			self::$expose = (bool) $settings['expose'];
 		}
 
 		// Determine if we are running in a command line environment

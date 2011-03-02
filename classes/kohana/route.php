@@ -326,6 +326,7 @@ class Kohana_Route {
 		elseif ( ! empty($uri))
 		{
 			$this->_uri = $uri;
+
 		}
 
 		if ( ! empty($regex))
