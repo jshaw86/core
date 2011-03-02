@@ -122,11 +122,6 @@ class Kohana_Core {
 	public static $shutdown_errors = array(E_PARSE, E_ERROR, E_USER_ERROR);
 
 	/**
-	 * @var  boolean  set the X-Powered-By header
-	 */
-	public static $expose = FALSE;
-
-	/**
 	 * @var  Log  logging object
 	 * @var  boolean  set the X-Powered-By header
 	 */
