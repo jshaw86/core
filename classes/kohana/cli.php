@@ -23,7 +23,7 @@ class Kohana_CLI {
 	 * @param   ...
 	 * @return  array
 	 */
-	public static function options($options)
+	public static function options($options = array())
 	{
 		// Get all of the requested options
 		$options = func_get_args();
@@ -61,11 +61,16 @@ class Kohana_CLI {
 			{
 				$value = NULL;
 			}
-
-			if (in_array($opt, $options))
+			
+			if (!empty($options) && in_array($opt, $options))
 			{
 				// Set the given value
 				$values[$opt] = $value;
+			}
+			else if(empty($options) && $opt != 'uri'){
+				$values[$opt] = $value;
+
+
 			}
 		}
 
