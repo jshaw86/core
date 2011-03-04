@@ -16,8 +16,8 @@
 class Kohana_Core {
 
 	// Release version and codename
-	const VERSION  = '3.1.0';
-	const CODENAME = 'merle';
+	const VERSION  = '3.1.1.1';
+	const CODENAME = 'aesalon';
 
 	// Common environment type constants for consistency and convenience
 	const PRODUCTION  = 1;
@@ -122,13 +122,12 @@ class Kohana_Core {
 	public static $shutdown_errors = array(E_PARSE, E_ERROR, E_USER_ERROR);
 
 	/**
-	 * @var  Log  logging object
 	 * @var  boolean  set the X-Powered-By header
 	 */
-	public static $expose = TRUE;
+	public static $expose = FALSE;
 
 	/**
-	 * @var  object  logging object
+	 * @var  Log  logging object
 	 */
 	public static $log;
 
@@ -228,21 +227,15 @@ class Kohana_Core {
 
 		// Enable the Kohana shutdown handler, which catches E_FATAL errors.
 		register_shutdown_function(array('Kohana', 'shutdown_handler'));
-
+		
 		if (ini_get('register_globals'))
 		{
-			// Reverse the effects of register_globals
-			Kohana::globals();
+			self::$expose = (bool) $settings['expose'];
 		}
 
 		if (isset($settings['expose']))
 		{
 			Kohana::$expose = (bool) $settings['expose'];
-		}
-
-		if (isset($settings['expose']))
-		{
-			self::$expose = (bool) $settings['expose'];
 		}
 
 		// Determine if we are running in a command line environment
@@ -253,7 +246,7 @@ class Kohana_Core {
 
 		// Determine if we are running in safe mode
 		Kohana::$safe_mode = (bool) ini_get('safe_mode');
-
+			
 		if (isset($settings['cache_dir']))
 		{
 			if ( ! is_dir($settings['cache_dir']))

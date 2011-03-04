@@ -10,7 +10,6 @@
  * @license    http://kohanaframework.org/license
  */
 class Kohana_Request implements Http_Request {
-	
 	/**
 	 * @var  string  client user agent
 	 */
@@ -31,7 +30,7 @@ class Kohana_Request implements Http_Request {
 	 */
 	public static $current;
 
-	public static function factory($uri = TRUE, Kohana_Cache $cache = NULL)
+	public static function factory($uri = TRUE, Cache $cache = NULL)
 	{
 		// If this is the initial request
 		if ( ! Request::$initial)
@@ -173,14 +172,6 @@ class Kohana_Request implements Http_Request {
 
 			$request->query($_GET)
 				->post($_POST);
-			// Add the Content-Type header
-			$instance->headers['Content-Type'] = 'text/html; charset='.Kohana::$charset;
-
-			if (Kohana::$expose)
-			{
-				$instance->headers['X-Powered-By'] = 'Kohana Framework '.Kohana::VERSION;
-			}
-
 		}
 
 		return $request;
@@ -481,6 +472,41 @@ class Kohana_Request implements Http_Request {
 	}
 
 	/**
+	 * Process URI
+	 *
+	 * @param   string  $uri     URI
+	 * @param   array   $routes  Route
+	 * @return  array
+	 */
+	public static function process_uri($uri, $routes = NULL)
+	{
+		// Load routes
+		$routes = ($routes === NULL) ? Route::all() : $routes;
+		$params = NULL;
+
+		foreach ($routes as $name => $route)
+		{
+			// We found something suitable
+			if ($params = $route->matches($uri))
+			{
+				if ( ! isset($params['uri']))
+				{
+					$params['uri'] = $uri;
+				}
+
+				if ( ! isset($params['route']))
+				{
+					$params['route'] = $route;
+				}
+
+				break;
+			}
+		}
+
+		return $params;
+	}
+
+	/**
 	 * Parses an accept header and returns an array (type => quality) of the
 	 * accepted types, ordered by quality.
 	 *
@@ -635,6 +661,9 @@ class Kohana_Request implements Http_Request {
 	 *
 	 *     $request = new Request($uri);
 	 *
+	 * If $cache parameter is set, the response for the request will attempt to
+	 * be retrieved from the cache.
+	 *
 	 * @param   string  $uri URI of the request
 	 * @param   Cache   $cache
 	 * @return  void
@@ -642,7 +671,7 @@ class Kohana_Request implements Http_Request {
 	 * @uses    Route::all
 	 * @uses    Route::matches
 	 */
-	public function __construct($uri, Kohana_Cache $cache = NULL)
+	public function __construct($uri, Cache $cache = NULL)
 	{
 		// Initialise the header
 		$this->_header = new Http_Header(array());
@@ -656,7 +685,7 @@ class Kohana_Request implements Http_Request {
 		 */
 		if (strpos($uri, '://') === FALSE)
 		{
-			$params = self::process_uri($uri);
+			$params = Request::process_uri($uri);
 			if ($params)
 			{
 				// Store the URI
@@ -689,7 +718,7 @@ class Kohana_Request implements Http_Request {
 				}
 
 				// These are accessible as public vars and can be overloaded
-				unset($params['controller'], $params['action'], $params['directory']);
+				unset($params['controller'], $params['action'], $params['directory'], $params['uri'], $params['route']);
 
 				// Params cannot be changed once matched
 				$this->_params = $params;
@@ -799,7 +828,6 @@ class Kohana_Request implements Http_Request {
 			// Return the full array
 			return $this->_params;
 		}
-
 
 		return Arr::get($this->_params, $key, $default);
 	}
@@ -968,7 +996,7 @@ class Kohana_Request implements Http_Request {
 	public function execute()
 	{
 		if ( ! $this->_client instanceof Kohana_Request_Client)
-			throw new Kohana_Request_Exception('Unable to execute :uri without a Kohana_Request_Client', array(':uri', $this->uri));
+			throw new Kohana_Request_Exception('Unable to execute :uri without a Kohana_Request_Client', array(':uri', $this->_uri));
 
 		return $this->_client->execute($this);
 	}
@@ -986,7 +1014,7 @@ class Kohana_Request implements Http_Request {
 	{
 		return ($this === Request::$initial);
 	}
-	
+
 	/**
 	 * Returns whether this is an ajax request (as used by JS frameworks)
 	 *
@@ -1059,48 +1087,6 @@ class Kohana_Request implements Http_Request {
 	}
 
 	/**
-	 * Checks the browser cache to see the response needs to be returned.
-	 *
-	 *     $request->check_cache($etag);
-	 *
-	 * [!!] If the cache check succeeds, no further processing can be done!
-	 *
-	 * @param   string  $etag  Etag to check
-	 * @return  Request
-	 * @throws  Kohana_Request_Exception
-	 * @uses    Request::generate_etag
-	 */
-	public function check_cache($etag = null)
-	{
-		if (empty($etag))
-		{
-			$etag = $this->generate_etag();
-		}
-
-		// Set the ETag header
-		$this->headers('ETag', $etag);
-
-		// Add the Cache-Control header if it is not already set
-		// This allows etags to be used with Max-Age, etc
-		// $this->header += array(
-		// 	'Cache-Control' => 'must-revalidate',
-		// );
-
-		if (isset($_SERVER['HTTP_IF_NONE_MATCH']) AND $_SERVER['HTTP_IF_NONE_MATCH'] === $etag)
-		{
-			// No need to send data again
-			$response = $this->create_response();
-			$response->status(304);
-			$response->send_headers();
-
-			// Stop execution
-			exit;
-		}
-
-		return $this;
-	}
-
-	/**
 	 * Gets or sets the Http method. Usually GET, POST, PUT or DELETE in
 	 * traditional CRUD applications.
 	 *
@@ -1135,7 +1121,7 @@ class Kohana_Request implements Http_Request {
 			return $this->_protocol;
 		}
 
-		$this->_protocol = strtoupper($protocol);
+		$this->_protocol = strtolower($protocol);
 		return $this;
 	}
 
@@ -1298,6 +1284,7 @@ class Kohana_Request implements Http_Request {
 	{
 		if ($key === NULL)
 			return $this->_get;
+
 		elseif ($value === NULL)
 		{
 			if (is_array($key))
@@ -1342,40 +1329,4 @@ class Kohana_Request implements Http_Request {
 			return $this;
 		}
 	}
-
-	/**
-	 * Process URI
-	 *
-	 * @param   string  $uri     URI
-	 * @param   array   $routes  Route
-	 * @return  array
-	 */
-	public static function process_uri($uri, $routes = NULL)
-	{
-		// Load routes
-		$routes = ($routes === NULL) ? Route::all() : $routes;
-		$params = NULL;
-
-		foreach ($routes as $name => $route)
-		{
-			// We found something suitable
-			if ($params = $route->matches($uri))
-			{
-				if ( ! isset($params['uri']))
-				{
-					$params['uri'] = $uri;
-				}
-
-				if ( ! isset($params['route']))
-				{
-					$params['route'] = $route;
-				}
-
-				break;
-			}
-		}
-
-		return $params;
-	}
-
 } // End Request

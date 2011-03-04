@@ -129,7 +129,7 @@ class Kohana_Http_Header_Value {
 		// Unrecognised value type
 		else
 		{
-			throw new Http_Exception(__METHOD__.' unknown header value type: :type. array or string allowed.', array(':type' => gettype($value)));
+			throw new Http_Exception_500(__METHOD__.' unknown header value type: :type. array or string allowed.', array(':type' => gettype($value)));
 		}
 	}
 
@@ -215,5 +215,6 @@ class Kohana_Http_Header_Value {
 
 		return $string;
 	}
+		
 
 } // End Http_Header_Field

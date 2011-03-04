@@ -42,8 +42,8 @@ class Kohana_Request_Client_Internal extends Request_Client {
 			$this->response->bind('format',$this->param('format'));
 
 
-
 	}
+
 	/**
 	 * Processes the request, executing the controller action that handles this
 	 * request, determined by the [Route].
@@ -111,16 +111,16 @@ class Kohana_Request_Client_Internal extends Request_Client {
 
 		// Is this the initial request
 		$initial_request = ($request === Request::$initial);
-		
+
 		try
 		{
 			// Initiate response time
 			$this->_response_time = time();
-
+		
 			if ( ! class_exists($prefix.$controller))
 			{
 				throw new Http_Exception_404('The requested URL :uri was not found on this server.',
-					array(':uri' => $request->param('uri')));
+					array(':uri' => $request->uri()));
 			}
 
 
@@ -218,9 +218,6 @@ class Kohana_Request_Client_Internal extends Request_Client {
 			// Re-throw the exception
 			throw $e;
 		}
-
-
-	
 
 			// Stop response time
 			$this->_response_time = (time() - $this->_response_time);
