@@ -123,8 +123,6 @@ class Kohana_Request_Client_Internal extends Request_Client {
 
 				$params = $request->param();
 
-				FB::log($action,'action');
-
 				// If the action doesn't exist, it's a 404
 				if($class->hasMethod('action_'.$action)){
 					$method = $class->getMethod('action_'.$action);
