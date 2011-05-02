@@ -92,12 +92,8 @@ class Kohana_Request_Client_Internal extends Request_Client {
 			// Initiate response time
 			$this->_response_time = time();
 		
-			if ( ! class_exists($prefix.$controller))
-			{
-				throw new HTTP_Exception_404('The requested URL :uri was not found on this server.',
-													array(':uri' => $request->uri()));
-			}
 			
+			$response = $request->create_response();
 			try
 			{
 				$class =false;
@@ -106,7 +102,7 @@ class Kohana_Request_Client_Internal extends Request_Client {
 					$class = new ReflectionClass($prefix.$controller);
 				}
 				catch(Exception $e){
-					$request->response()->body($this->_invoke_model($request,isset($_REQUEST['params'])? $_REQUEST['params']:array()));
+					$request->response()->body($this->_invoke_model($request,isset($_REQUEST['params'])? array($_REQUEST['params']):array()));
 				}
 
 				//new	
@@ -117,7 +113,7 @@ class Kohana_Request_Client_Internal extends Request_Client {
 				}
 
 				// Create a new instance of the controller
-				$controller = $class->newInstance($request, $request->create_response());
+				$controller = $class->newInstance($request, $response);
 
 				$class->getMethod('before')->invoke($controller);
 
