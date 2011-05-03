@@ -102,7 +102,8 @@ class Kohana_Request_Client_Internal extends Request_Client {
 					$class = new ReflectionClass($prefix.$controller);
 				}
 				catch(Exception $e){
-					$request->response()->body($this->_invoke_model($request,isset($_REQUEST['params'])? array($_REQUEST['params']):array()));
+					$request->response()->body($this->_invoke_model($request,isset($_REQUEST['params'])? $_REQUEST['params']:array()));
+					return $request->response();
 				}
 
 				//new	
