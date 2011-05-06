@@ -7,7 +7,7 @@
  * @package    Kohana
  * @category   Base
  * @author     Kohana Team
- * @copyright  (c) 2008-2010 Kohana Team
+ * @copyright  (c) 2008-2011 Kohana Team
  * @license    http://kohanaframework.org/license
  */
 class Kohana_View {
@@ -48,8 +48,8 @@ class Kohana_View {
 
 		if (View::$_global_data)
 		{
-			// Import the global view variables to local namespace and maintain references
-			extract(View::$_global_data, EXTR_REFS);
+			// Import the global view variables to local namespace
+			extract(View::$_global_data, EXTR_SKIP);
 		}
 
 		// Capture the view output
@@ -230,7 +230,7 @@ class Kohana_View {
 		catch (Exception $e)
 		{
 			// Display the exception message
-			Kohana::exception_handler($e);
+			Kohana_Exception::handler($e);
 
 			return '';
 		}

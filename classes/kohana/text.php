@@ -1,17 +1,17 @@
-<?php defined('SYSPATH') or die('No direct access allowed.');
+<?php defined('SYSPATH') or die('No direct script access.');
 /**
  * Text helper class. Provides simple methods for working with text.
  *
  * @package    Kohana
  * @category   Helpers
  * @author     Kohana Team
- * @copyright  (c) 2007-2010 Kohana Team
+ * @copyright  (c) 2007-2011 Kohana Team
  * @license    http://kohanaframework.org/license
  */
 class Kohana_Text {
 
 	/**
-	 * @var  array   number units and text equivalents
+	 * @var  array   number units and text equivilents
 	 */
 	public static $units = array(
 		1000000000 => 'billion',
@@ -193,7 +193,7 @@ class Kohana_Text {
 				$pool = '123456789';
 			break;
 			case 'distinct':
-				$pool = '2345679ACDEFHJKLMNPRSTUVWXYZ';
+				$pool = '34679ACDEFHJKLMNPRTUVWXY';
 			break;
 			default:
 				$pool = (string) $type;
@@ -529,6 +529,7 @@ class Kohana_Text {
 					else
 					{
 						$item = $name;
+
 					}
 				}
 				else
@@ -546,6 +547,7 @@ class Kohana_Text {
 				}
 
 				$last_item = $text[] = $item;
+
 				$last_unit = $unit;
 			}
 		}
